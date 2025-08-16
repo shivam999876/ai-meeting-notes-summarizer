@@ -1,15 +1,22 @@
-const express = require('express');
-const cors = require('cors');
-const multer = require('multer');
-const nodemailer = require('nodemailer');
-const axios = require('axios');
-const path = require('path');
-require('dotenv').config();
+// server.js
+
+const express = require("express");
+const cors = require("cors");
+const multer = require("multer");
+const nodemailer = require("nodemailer");
+const axios = require("axios");
+require("dotenv").config();
 
 // Debug: Check if environment variables are loaded
-console.log('Environment check:');
-console.log('GROQ_API_KEY:', process.env.GROQ_API_KEY ? '✅ Loaded' : '❌ Not loaded');
-console.log('EMAIL_USER:', process.env.EMAIL_USER ? '✅ Loaded' : '❌ Not loaded');
+console.log("Environment check:");
+console.log(
+  "GROQ_API_KEY:",
+  process.env.GROQ_API_KEY ? "✅ Loaded" : "❌ Not loaded"
+);
+console.log(
+  "EMAIL_USER:",
+  process.env.EMAIL_USER ? "✅ Loaded" : "❌ Not loaded"
+);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -17,107 +24,108 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'client/build')));
 
 // Configure multer for file uploads
 const upload = multer({
   storage: multer.memoryStorage(),
   fileFilter: (req, file, cb) => {
-    // Only allow text files
-    if (file.mimetype === 'text/plain' || file.originalname.endsWith('.txt')) {
+    if (file.mimetype === "text/plain" || file.originalname.endsWith(".txt")) {
       cb(null, true);
     } else {
-      cb(new Error('Only text files are allowed'), false);
+      cb(new Error("Only text files are allowed"), false);
     }
   },
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
-  }
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
 });
 
 // Groq API configuration
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 // Email configuration
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail",
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
+    pass: process.env.EMAIL_PASS,
+  },
 });
 
-// Routes
-app.post('/api/summarize', upload.single('transcript'), async (req, res) => {
+// ================== ROUTES ==================
+
+// Summarize transcript
+app.post("/api/summarize", upload.single("transcript"), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: 'No transcript file uploaded' });
+      return res.status(400).json({ error: "No transcript file uploaded" });
     }
-
     if (!GROQ_API_KEY) {
-      return res.status(500).json({ error: 'Groq API key not configured' });
+      return res.status(500).json({ error: "Groq API key not configured" });
     }
 
-    const transcript = req.file.buffer.toString('utf-8');
-    const customInstruction = req.body.customInstruction || 'Summarize this meeting transcript';
+    const transcript = req.file.buffer.toString("utf-8");
+    const customInstruction =
+      req.body.customInstruction || "Summarize this meeting transcript";
 
-    // Prepare the prompt for Groq
-    const systemPrompt = `You are an expert meeting summarizer. ${customInstruction}. 
-    Provide a clear, structured summary that captures the key points, decisions, and action items.`;
+    const systemPrompt = `You are an expert meeting summarizer. ${customInstruction}.
+    Provide a clear, structured summary that captures key points, decisions, and action items.`;
 
     const userPrompt = `Please summarize the following meeting transcript:\n\n${transcript}`;
 
-    // Call Groq API
-    const response = await axios.post(GROQ_API_URL, {
-      model: 'llama3-8b-8192',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      temperature: 0.3,
-      max_tokens: 2000
-    }, {
-      headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
-        'Content-Type': 'application/json'
+    const response = await axios.post(
+      GROQ_API_URL,
+      {
+        model: "llama3-8b-8192",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.3,
+        max_tokens: 2000,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${GROQ_API_KEY}`,
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
 
     const summary = response.data.choices[0].message.content;
     res.json({ summary });
-
   } catch (error) {
-    console.error('Summarization error:', error);
-    if (error.response?.data) {
-      res.status(500).json({ error: 'AI summarization failed', details: error.response.data });
-    } else {
-      res.status(500).json({ error: 'Summarization failed', details: error.message });
-    }
+    console.error(
+      "Summarization error:",
+      error.response?.data || error.message
+    );
+    res.status(500).json({
+      error: "AI summarization failed",
+      details: error.response?.data || error.message,
+    });
   }
 });
 
-app.post('/api/send-email', async (req, res) => {
+// Send summary via email
+app.post("/api/send-email", async (req, res) => {
   try {
     const { recipientEmails, subject, summary } = req.body;
 
     if (!recipientEmails || !summary) {
-      return res.status(400).json({ error: 'Recipient emails and summary are required' });
+      return res
+        .status(400)
+        .json({ error: "Recipient emails and summary are required" });
     }
-
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      return res.status(500).json({ error: 'Email configuration not set up' });
+      return res.status(500).json({ error: "Email configuration not set up" });
     }
 
-    // Split multiple email addresses
-    const emails = recipientEmails.split(',').map(email => email.trim());
-    
-    // Send email to each recipient
-    const emailPromises = emails.map(email => {
+    const emails = recipientEmails.split(",").map((email) => email.trim());
+
+    const emailPromises = emails.map((email) => {
       const mailOptions = {
         from: process.env.EMAIL_USER,
         to: email,
-        subject: subject || 'Meeting Summary',
+        subject: subject || "Meeting Summary",
         html: `
           <h2>Meeting Summary</h2>
           <div style="white-space: pre-wrap; font-family: Arial, sans-serif;">
@@ -125,33 +133,28 @@ app.post('/api/send-email', async (req, res) => {
           </div>
           <br>
           <p><em>Generated by AI Meeting Notes Summarizer</em></p>
-        `
+        `,
       };
-      
       return transporter.sendMail(mailOptions);
     });
 
     await Promise.all(emailPromises);
-    res.json({ message: 'Summary sent successfully to all recipients' });
-
+    res.json({ message: "Summary sent successfully to all recipients" });
   } catch (error) {
-    console.error('Email sending error:', error);
-    res.status(500).json({ error: 'Failed to send email', details: error.message });
+    console.error("Email sending error:", error.message);
+    res
+      .status(500)
+      .json({ error: "Failed to send email", details: error.message });
   }
 });
 
-// Serve React app for all other routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+// ================== ERROR HANDLING ==================
+app.use((err, req, res, next) => {
+  console.error("Server error:", err.message);
+  res.status(500).json({ error: "Internal server error" });
 });
 
-// Error handling middleware
-app.use((error, req, res, next) => {
-  console.error('Server error:', error);
-  res.status(500).json({ error: 'Internal server error' });
-});
-
+// ================== START SERVER ==================
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Frontend will be served from: ${path.join(__dirname, 'client/build')}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
