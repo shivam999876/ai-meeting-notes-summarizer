@@ -5,6 +5,7 @@ const cors = require("cors");
 const multer = require("multer");
 const nodemailer = require("nodemailer");
 const axios = require("axios");
+const path = require("path");
 require("dotenv").config();
 
 // Debug: Check if environment variables are loaded
@@ -51,7 +52,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// ================== ROUTES ==================
+// ================== API ROUTES ==================
 
 // Summarize transcript
 app.post("/api/summarize", upload.single("transcript"), async (req, res) => {
@@ -146,6 +147,13 @@ app.post("/api/send-email", async (req, res) => {
       .status(500)
       .json({ error: "Failed to send email", details: error.message });
   }
+});
+
+// ================== SERVE FRONTEND (React build) ==================
+app.use(express.static(path.join(__dirname, "client/build")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "client/build", "index.html"));
 });
 
 // ================== ERROR HANDLING ==================
