@@ -1,43 +1,51 @@
-# AI Meeting Notes Summarizer
+# AI Meeting Notes Summarizer  
 
-A full-stack web application that leverages **AI** to automatically summarize meeting transcripts with **custom instructions** and **email sharing capabilities**.
+A full-stack web application that leverages **AI** to automatically summarize meeting transcripts with **custom instructions** and **email sharing capabilities**.  
+
+🌐 **Live Demo**: [AI Meeting Notes Summarizer](https://ai-meeting-summarizer-0hmv.onrender.com/)  
 
 ---
 
-## 🚀 Features
+## 📸 Preview  
 
-- **File Upload**: Upload plain text (`.txt`) transcript files (max 5MB)
+![App Screenshot](assets/screenshot.png)  
+
+---
+
+## 🚀 Features  
+
+- **File Upload**: Upload plain text (`.txt`) transcript files (max 5MB)  
 - **Custom Instructions**: Provide specific summarization prompts  
-  _(e.g., "Summarize in bullet points for executives")_
-- **AI Summarization**: Powered by **Groq Cloud API (Llama 3.1 8B)**
-- **Editable Summaries**: Review and refine AI-generated summaries
-- **Email Sharing**: Send summaries to multiple recipients via Gmail SMTP
-- **Responsive Design**: Works seamlessly on desktop & mobile
+  _(e.g., "Summarize in bullet points for executives")_  
+- **AI Summarization**: Powered by **Groq Cloud API (Llama 3.1 8B)**  
+- **Editable Summaries**: Review and refine AI-generated summaries  
+- **Email Sharing**: Send summaries to multiple recipients via Gmail SMTP  
+- **Responsive Design**: Works seamlessly on desktop & mobile  
 
 ---
 
-## 🛠 Tech Stack
+## 🛠 Tech Stack  
 
-**Frontend**
-- React.js (functional components, hooks)
-- Axios (API calls)
-- Custom CSS (responsive design)
+**Frontend**  
+- React.js (functional components, hooks)  
+- Axios (API calls)  
+- Custom CSS (responsive design)  
 
-**Backend**
-- Node.js (v18+), Express.js
-- Multer (file upload handling)
-- Nodemailer (email service)
-- dotenv (environment variables)
+**Backend**  
+- Node.js (v18+), Express.js  
+- Multer (file upload handling)  
+- Nodemailer (email service)  
+- dotenv (environment variables)  
 
-**AI**
-- Groq Cloud API (Llama 3.1 8B model)
+**AI**  
+- Groq Cloud API (Llama 3.1 8B model)  
 
-**Dev Tools**
-- npm, nodemon, CORS, error middleware
+**Dev Tools**  
+- npm, nodemon, CORS, error middleware  
 
 ---
 
-## 📋 Prerequisites
+## 📋 Prerequisites  
 
 - Node.js v14+  
 - npm or yarn  
@@ -46,15 +54,34 @@ A full-stack web application that leverages **AI** to automatically summarize me
 
 ---
 
-## ⚡ Quick Start
+## ⚡ Quick Start  
 
-### 1. Clone & Install
+### 1. Clone & Install  
 ```bash
-git clone https://github.com/your-username/ai-meeting-notes-summarizer.git
+git clone https://github.com/shivam999876/ai-meeting-notes-summarizer.git
 cd ai-meeting-notes-summarizer
 
 # Backend
 npm install
 
 # Frontend
-npm run install-client
+cd client
+npm install
+
+### 2. Setup Environment Variables  
+
+Create a **.env** file in the root directory with the following variables:  
+
+```env
+# Backend server port
+PORT=5000  
+
+# Groq API key (get it from https://console.groq.com/)
+GROQ_API_KEY=your_groq_api_key_here  
+
+# Gmail SMTP credentials
+EMAIL_USER=your_gmail@example.com  
+EMAIL_PASS=your_gmail_app_password  
+
+cd client
+npm install
